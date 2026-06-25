@@ -1,0 +1,1378 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>AI Healthcare Portal</title>
+
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+  <style>
+    :root{
+      --blue:#4f46e5;
+      --blue2:#2563eb;
+      --purple:#8b5cf6;
+      --pink:#d946ef;
+      --cyan:#22d3ee;
+      --dark:#071124;
+      --dark2:#0d1731;
+      --text:#eaf2ff;
+      --muted:#aab9d7;
+      --glass:rgba(12, 23, 52, .68);
+      --glass2:rgba(255,255,255,.10);
+      --border:rgba(164, 119, 255, .32);
+      --shadow:0 18px 45px rgba(0,0,0,.32);
+    }
+
+    *{
+      margin:0;
+      padding:0;
+      box-sizing:border-box;
+      font-family:Segoe UI, Arial, sans-serif;
+    }
+
+    body{
+      min-height:100vh;
+      color:var(--text);
+      overflow-x:hidden;
+      background:
+        radial-gradient(circle at 12% 15%, rgba(139,92,246,.35), transparent 28%),
+        radial-gradient(circle at 88% 18%, rgba(34,211,238,.22), transparent 26%),
+        radial-gradient(circle at 55% 85%, rgba(217,70,239,.18), transparent 30%),
+        linear-gradient(135deg,#06102a,#10183d 45%,#0b1430);
+      perspective:1200px;
+    }
+
+    body::before,
+    body::after{
+      content:"";
+      position:fixed;
+      border-radius:50%;
+      filter:blur(4px);
+      z-index:-1;
+      opacity:.8;
+      animation:floatOrb 12s ease-in-out infinite alternate;
+    }
+
+    body::before{
+      width:280px;
+      height:280px;
+      top:15%;
+      left:-100px;
+      background:radial-gradient(circle,rgba(139,92,246,.55),rgba(139,92,246,0));
+    }
+
+    body::after{
+      width:340px;
+      height:340px;
+      right:-110px;
+      bottom:5%;
+      background:radial-gradient(circle,rgba(34,211,238,.42),rgba(34,211,238,0));
+      animation-delay:2s;
+    }
+
+    @keyframes floatOrb{
+      from{transform:translateY(-20px) translateX(0) scale(.9);}
+      to{transform:translateY(45px) translateX(35px) scale(1.15);}
+    }
+
+    /* LOADING SCREEN */
+    #loader{
+      position:fixed;
+      inset:0;
+      z-index:1000;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      flex-direction:column;
+      background:linear-gradient(135deg,#070d24,#171044,#0c2b55);
+      transition:.6s;
+    }
+
+    .loader-logo{
+      width:95px;
+      height:95px;
+      border-radius:28px;
+      display:grid;
+      place-items:center;
+      font-size:42px;
+      background:linear-gradient(135deg,#8b5cf6,#2563eb,#22d3ee);
+      box-shadow:0 0 35px rgba(139,92,246,.85);
+      animation:pulseLogo 1.5s infinite alternate;
+    }
+
+    @keyframes pulseLogo{
+      from{transform:scale(.92) rotate(-4deg);}
+      to{transform:scale(1.08) rotate(4deg);}
+    }
+
+    .loader-text{
+      margin-top:20px;
+      font-size:18px;
+      font-weight:700;
+      letter-spacing:1px;
+      color:#dceaff;
+    }
+
+    .loader-bar{
+      width:230px;
+      height:7px;
+      margin-top:18px;
+      border-radius:20px;
+      overflow:hidden;
+      background:rgba(255,255,255,.12);
+    }
+
+    .loader-bar span{
+      display:block;
+      width:55%;
+      height:100%;
+      border-radius:20px;
+      background:linear-gradient(90deg,#8b5cf6,#22d3ee);
+      animation:loading 1.2s infinite ease-in-out;
+    }
+
+    @keyframes loading{
+      from{transform:translateX(-120%);}
+      to{transform:translateX(250%);}
+    }
+
+    header{
+      height:76px;
+      width:100%;
+      position:sticky;
+      top:0;
+      z-index:50;
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      padding:0 28px;
+      overflow:hidden;
+      background:rgba(8,15,39,.72);
+      backdrop-filter:blur(18px);
+      border-bottom:1px solid rgba(162,120,255,.25);
+      box-shadow:0 8px 30px rgba(0,0,0,.28);
+    }
+
+    header::before{
+      content:"";
+      position:absolute;
+      width:240px;
+      height:240px;
+      border-radius:50%;
+      top:-170px;
+      right:10%;
+      background:rgba(139,92,246,.32);
+      filter:blur(10px);
+      animation:headerGlow 5s infinite alternate;
+    }
+
+    @keyframes headerGlow{
+      from{transform:translateX(-40px) scale(.8);}
+      to{transform:translateX(90px) scale(1.25);}
+    }
+
+    .brand{
+      display:flex;
+      align-items:center;
+      gap:11px;
+      z-index:2;
+    }
+
+    .brand-icon{
+      width:42px;
+      height:42px;
+      display:grid;
+      place-items:center;
+      border-radius:14px;
+      font-size:22px;
+      background:linear-gradient(135deg,#8b5cf6,#2563eb,#22d3ee);
+      box-shadow:0 0 22px rgba(34,211,238,.42);
+    }
+
+    header h1{
+      font-size:21px;
+      background:linear-gradient(90deg,#ffffff,#b9d9ff,#d8b4fe);
+      -webkit-background-clip:text;
+      color:transparent;
+    }
+
+    .header-status{
+      z-index:2;
+      font-size:13px;
+      padding:8px 12px;
+      border-radius:20px;
+      color:#c9f7ff;
+      background:rgba(34,211,238,.10);
+      border:1px solid rgba(34,211,238,.25);
+    }
+
+    .page{
+      display:none;
+      min-height:calc(100vh - 76px);
+    }
+
+    .page.active{
+      display:block;
+      animation:pageIn .45s ease;
+    }
+
+    @keyframes pageIn{
+      from{opacity:0;transform:translateY(16px);}
+      to{opacity:1;transform:translateY(0);}
+    }
+
+    .auth-page{
+      display:none;
+      min-height:calc(100vh - 76px);
+      align-items:center;
+      justify-content:center;
+      padding:30px 16px;
+    }
+
+    .auth-page.active{
+      display:flex;
+      animation:pageIn .45s ease;
+    }
+
+    .auth-card,
+    .content-card,
+    .sidebar,
+    .stat-card,
+    .chart-box{
+      border:1px solid var(--border);
+      background:var(--glass);
+      backdrop-filter:blur(18px);
+      -webkit-backdrop-filter:blur(18px);
+      box-shadow:var(--shadow);
+    }
+
+    .auth-card{
+      width:min(520px,100%);
+      padding:32px;
+      border-radius:24px;
+      position:relative;
+      overflow:hidden;
+    }
+
+    .auth-card::before,
+    .content-card::before{
+      content:"";
+      position:absolute;
+      width:160px;
+      height:160px;
+      border-radius:50%;
+      background:rgba(139,92,246,.18);
+      top:-80px;
+      right:-65px;
+      filter:blur(2px);
+    }
+
+    .auth-card h2,
+    .content-card h2{
+      position:relative;
+      z-index:1;
+      margin-bottom:14px;
+      color:#e9d5ff;
+    }
+
+    .auth-card p{
+      color:var(--muted);
+    }
+
+    input,select,textarea{
+      width:100%;
+      padding:13px;
+      margin:9px 0;
+      color:#eef6ff;
+      outline:none;
+      border-radius:11px;
+      font-size:15px;
+      background:rgba(255,255,255,.08);
+      border:1px solid rgba(190,170,255,.25);
+      box-shadow:inset 0 2px 8px rgba(0,0,0,.16);
+      transition:.25s;
+    }
+
+    select option{
+      color:#111827;
+    }
+
+    input::placeholder,
+    textarea::placeholder{
+      color:#a9b8d4;
+    }
+
+    input:focus,select:focus,textarea:focus{
+      border-color:#7c6cff;
+      transform:translateY(-3px);
+      box-shadow:0 0 0 4px rgba(139,92,246,.16),0 10px 18px rgba(0,0,0,.20);
+    }
+
+    button{
+      border:none;
+      color:white;
+      cursor:pointer;
+      padding:11px 15px;
+      margin:5px 3px 5px 0;
+      border-radius:10px;
+      font-size:14px;
+      font-weight:600;
+      background:linear-gradient(135deg,#7c3aed,#2563eb,#0891b2);
+      box-shadow:0 5px 0 #273b9a,0 10px 18px rgba(0,0,0,.22);
+      transition:.2s;
+    }
+
+    button:hover{
+      transform:translateY(-3px);
+      box-shadow:0 8px 0 #273b9a,0 15px 25px rgba(0,0,0,.28),0 0 18px rgba(139,92,246,.45);
+    }
+
+    button:active{
+      transform:translateY(4px);
+      box-shadow:0 1px 0 #273b9a,0 4px 9px rgba(0,0,0,.25);
+    }
+
+    .message{
+      min-height:20px;
+      margin-top:10px;
+      font-weight:600;
+    }
+
+    .dashboard-layout{
+      display:flex;
+      min-height:calc(100vh - 76px);
+      gap:20px;
+      padding:22px;
+    }
+
+    .sidebar{
+      width:255px;
+      min-width:255px;
+      height:fit-content;
+      position:sticky;
+      top:98px;
+      padding:18px;
+      border-radius:20px;
+      border-left:4px solid #8b5cf6;
+    }
+
+    .sidebar h3{
+      margin-bottom:13px;
+      color:#d8b4fe;
+    }
+
+    .sidebar button{
+      width:100%;
+      text-align:left;
+      margin:6px 0;
+      padding:12px;
+      background:linear-gradient(90deg,rgba(124,58,237,.92),rgba(37,99,235,.90));
+    }
+
+    .sidebar button:hover{
+      transform:translateX(7px) translateY(-2px);
+      box-shadow:0 6px 0 #273b9a,0 0 20px rgba(34,211,238,.38);
+    }
+
+    .main-content{
+      flex:1;
+      min-width:0;
+    }
+
+    .content-card{
+      position:relative;
+      overflow:hidden;
+      padding:23px;
+      border-radius:22px;
+      margin-bottom:18px;
+      transition:.35s;
+    }
+
+    .content-card:hover{
+      transform:translateY(-5px);
+      box-shadow:0 22px 42px rgba(0,0,0,.34),0 0 26px rgba(139,92,246,.18);
+    }
+
+    .cards{
+      display:grid;
+      grid-template-columns:repeat(4,minmax(150px,1fr));
+      gap:16px;
+      margin:17px 0;
+    }
+
+    .stat-card{
+      position:relative;
+      overflow:hidden;
+      min-height:135px;
+      padding:20px;
+      border-radius:19px;
+      cursor:pointer;
+      transform-style:preserve-3d;
+      transition:transform .18s ease,box-shadow .18s ease;
+    }
+
+    .stat-card::before{
+      content:"";
+      position:absolute;
+      width:120px;
+      height:120px;
+      top:-50px;
+      right:-42px;
+      border-radius:50%;
+      background:rgba(34,211,238,.16);
+    }
+
+    .stat-card::after{
+      content:"";
+      position:absolute;
+      width:80px;
+      height:80px;
+      bottom:-38px;
+      left:-28px;
+      border-radius:50%;
+      background:rgba(217,70,239,.16);
+    }
+
+    .stat-card h3,
+    .stat-card h1{
+      position:relative;
+      z-index:1;
+    }
+
+    .stat-card h3{
+      font-size:15px;
+      color:#c7d7f6;
+    }
+
+    .stat-card h1{
+      margin-top:12px;
+      font-size:33px;
+      color:#ffffff;
+      text-shadow:0 0 16px rgba(34,211,238,.35);
+    }
+
+    .two-columns{
+      display:grid;
+      grid-template-columns:1fr 1fr;
+      gap:18px;
+      margin-top:18px;
+    }
+
+    .chart-box{
+      padding:18px;
+      border-radius:17px;
+      border-left:5px solid #22d3ee;
+      transition:.3s;
+    }
+
+    .chart-box:hover{
+      transform:translateY(-5px) scale(1.01);
+      box-shadow:0 15px 28px rgba(0,0,0,.25),0 0 20px rgba(34,211,238,.17);
+    }
+
+    .chart-box h3{
+      margin-bottom:8px;
+      color:#d8b4fe;
+    }
+
+    canvas{
+      width:100% !important;
+      max-height:320px;
+      margin-top:12px;
+    }
+
+    table{
+      width:100%;
+      border-collapse:collapse;
+      margin-top:12px;
+      overflow:hidden;
+      border-radius:12px;
+      background:rgba(255,255,255,.06);
+    }
+
+    th,td{
+      padding:12px;
+      text-align:left;
+      border:1px solid rgba(194,182,255,.18);
+    }
+
+    th{
+      color:#d8b4fe;
+      background:rgba(124,58,237,.20);
+    }
+
+    tbody tr{
+      transition:.22s;
+    }
+
+    tbody tr:hover{
+      background:rgba(34,211,238,.10);
+      transform:scale(1.01);
+    }
+
+    ul{
+      padding-left:22px;
+      line-height:2;
+      color:#dbeafe;
+    }
+
+    small{
+      color:#aab9d7;
+    }
+
+    @media(max-width:950px){
+      .dashboard-layout{
+        flex-direction:column;
+      }
+
+      .sidebar{
+        position:static;
+        width:100%;
+        min-width:0;
+      }
+
+      .sidebar button{
+        width:auto;
+        display:inline-block;
+      }
+
+      .cards{
+        grid-template-columns:repeat(2,1fr);
+      }
+
+      .two-columns{
+        grid-template-columns:1fr;
+      }
+    }
+
+    @media(max-width:560px){
+      header{
+        padding:0 13px;
+      }
+
+      header h1{
+        font-size:15px;
+      }
+
+      .header-status{
+        display:none;
+      }
+
+      .dashboard-layout{
+        padding:10px;
+      }
+
+      .auth-card,
+      .content-card{
+        padding:18px;
+      }
+
+      .cards{
+        grid-template-columns:1fr;
+      }
+
+      .sidebar button{
+        width:100%;
+      }
+
+      th,td{
+        padding:8px;
+        font-size:12px;
+      }
+    }
+  </style>
+</head>
+
+<body>
+
+  <div id="loader">
+    <div class="loader-logo">🏥</div>
+    <div class="loader-text">Loading AI Healthcare Portal</div>
+    <div class="loader-bar"><span></span></div>
+  </div>
+
+  <header>
+    <div class="brand">
+      <div class="brand-icon">🏥</div>
+      <h1>AI Healthcare Portal</h1>
+    </div>
+    <div class="header-status">● AI System Online</div>
+  </header>
+
+  <!-- LOGIN PAGE -->
+  <section id="loginPage" class="auth-page active">
+    <div class="auth-card">
+      <h2>🔐 Secure Login</h2>
+      <p>Access your AI-powered healthcare dashboard.</p>
+
+      <input type="email" id="loginEmail" placeholder="Email Address">
+      <input type="password" id="loginPassword" placeholder="Password">
+
+      <select id="loginRole">
+        <option value="">Select Role</option>
+        <option>Patient</option>
+        <option>Doctor</option>
+        <option>Admin</option>
+      </select>
+
+      <button onclick="login()">Login</button>
+      <button onclick="showPage('registerPage')">Create Account</button>
+      <button onclick="showPage('forgotPage')">Forgot Password?</button>
+
+      <p id="loginMessage" class="message"></p>
+    </div>
+  </section>
+
+  <!-- REGISTER PAGE -->
+  <section id="registerPage" class="auth-page">
+    <div class="auth-card">
+      <h2>📝 Create New Account</h2>
+
+      <input type="text" id="registerName" placeholder="Full Name">
+      <input type="email" id="registerEmail" placeholder="Email Address">
+      <input type="password" id="registerPassword" placeholder="Create Password">
+
+      <select id="registerRole">
+        <option value="">Select Role</option>
+        <option>Patient</option>
+        <option>Doctor</option>
+        <option>Admin</option>
+      </select>
+
+      <button onclick="registerUser()">Create Account</button>
+      <button onclick="showPage('loginPage')">Back to Login</button>
+
+      <p id="registerMessage" class="message"></p>
+    </div>
+  </section>
+
+  <!-- FORGOT PASSWORD -->
+  <section id="forgotPage" class="auth-page">
+    <div class="auth-card">
+      <h2>🔑 Forgot Password</h2>
+      <input type="email" id="forgotEmail" placeholder="Registered Email Address">
+
+      <button onclick="forgotPassword()">Send Reset Link</button>
+      <button onclick="showPage('loginPage')">Back to Login</button>
+
+      <p id="forgotMessage" class="message"></p>
+    </div>
+  </section>
+
+  <!-- DASHBOARD -->
+  <section id="dashboardPage" class="page">
+    <div class="dashboard-layout">
+
+      <aside class="sidebar">
+        <h3>📌 Portal Menu</h3>
+        <button onclick="showPage('dashboardPage')">🏠 Dashboard</button>
+        <button onclick="showPage('patientPage')">👤 Patient Module</button>
+        <button onclick="showPage('doctorPage')">👨‍⚕️ Doctor Module</button>
+        <button onclick="showPage('aiPage')">🤖 AI Assistant</button>
+        <button onclick="showPage('ocrPage')">📄 OCR Module</button>
+        <button onclick="showPage('analyticsPage')">📊 Analytics</button>
+        <button onclick="showPage('reminderPage')">💊 Medicine Reminder</button>
+        <button onclick="showPage('predictionPage')">❤️ Health Prediction</button>
+        <button onclick="showPage('healthReportPage')">📈 Health Report</button>
+        <button onclick="logout()">🚪 Logout</button>
+      </aside>
+
+      <main class="main-content">
+        <div class="content-card">
+          <h2>📊 Smart Healthcare Dashboard</h2>
+          <p>Welcome to the AI-powered healthcare management system.</p>
+          <input type="text" id="dashboardSearch" placeholder="Search Patients, Doctors, Reports" oninput="searchDashboard()">
+          <div id="searchResult"></div>
+        </div>
+
+        <div class="cards">
+          <div class="stat-card"><h3>Total Patients</h3><h1>150</h1></div>
+          <div class="stat-card"><h3>Total Doctors</h3><h1>25</h1></div>
+          <div class="stat-card"><h3>Appointments</h3><h1>85</h1></div>
+          <div class="stat-card"><h3>Claims</h3><h1>320</h1></div>
+        </div>
+
+        <div class="two-columns">
+          <div class="content-card">
+            <h2>🔔 Notifications</h2>
+            <ul>
+              <li>Appointment Approved</li>
+              <li>Prescription Uploaded</li>
+              <li>OCR Scan Completed</li>
+              <li>AI Assistant Used</li>
+            </ul>
+          </div>
+
+          <div class="content-card">
+            <h2>👤 User Profile</h2>
+            <p><b>Name:</b> <span id="profileName">Not logged in</span></p>
+            <p><b>Role:</b> <span id="profileRole">Not selected</span></p>
+            <p><b>Email:</b> <span id="profileEmail">Not available</span></p>
+          </div>
+        </div>
+      </main>
+    </div>
+  </section>
+
+  <!-- PATIENT -->
+  <section id="patientPage" class="page">
+    <div class="dashboard-layout">
+      <aside class="sidebar">
+        <h3>📌 Portal Menu</h3>
+        <button onclick="showPage('dashboardPage')">🏠 Dashboard</button>
+        <button onclick="showPage('patientPage')">👤 Patient Module</button>
+        <button onclick="showPage('doctorPage')">👨‍⚕️ Doctor Module</button>
+        <button onclick="showPage('analyticsPage')">📊 Analytics</button>
+        <button onclick="logout()">🚪 Logout</button>
+      </aside>
+
+      <main class="main-content">
+        <div class="content-card">
+          <h2>👤 Patient Dashboard</h2>
+          <p><b>Patient ID:</b> PT001</p>
+          <p><b>Name:</b> Rahul Patil</p>
+          <p><b>Blood Group:</b> O+</p>
+
+          <h2 style="margin-top:22px;">📅 Book Appointment</h2>
+
+          <select id="appointmentDoctor">
+            <option value="">Select Doctor</option>
+            <option>Dr. Sharma - General Physician</option>
+            <option>Dr. Patil - Dentist</option>
+            <option>Dr. Singh - Cardiologist</option>
+          </select>
+
+          <input type="date" id="appointmentDate">
+          <input type="time" id="appointmentTime">
+          <textarea id="appointmentReason" placeholder="Enter symptoms or reason"></textarea>
+
+          <button onclick="bookAppointment()">Book Appointment</button>
+          <p id="appointmentMessage" class="message"></p>
+
+          <h2 style="margin-top:22px;">📋 Appointment History</h2>
+
+          <table>
+            <thead>
+              <tr>
+                <th>Date & Time</th>
+                <th>Doctor</th>
+                <th>Reason</th>
+                <th>Status</th>
+              </tr>
+            </thead>
+            <tbody id="appointmentHistory">
+              <tr>
+                <td>15-Jun-2026, 10:00 AM</td>
+                <td>Dr. Sharma</td>
+                <td>General Checkup</td>
+                <td>Completed</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </main>
+    </div>
+  </section>
+
+  <!-- DOCTOR -->
+  <section id="doctorPage" class="page">
+    <div class="dashboard-layout">
+      <aside class="sidebar">
+        <h3>📌 Portal Menu</h3>
+        <button onclick="showPage('dashboardPage')">🏠 Dashboard</button>
+        <button onclick="showPage('patientPage')">👤 Patient Module</button>
+        <button onclick="showPage('doctorPage')">👨‍⚕️ Doctor Module</button>
+        <button onclick="showPage('analyticsPage')">📊 Analytics</button>
+        <button onclick="logout()">🚪 Logout</button>
+      </aside>
+
+      <main class="main-content">
+        <div class="content-card">
+          <h2>👨‍⚕️ Doctor Dashboard</h2>
+
+          <h3>📝 Prescription Management</h3>
+          <textarea id="prescriptionBox" rows="7" placeholder="Write prescription here"></textarea>
+
+          <button onclick="savePrescription()">💾 Save Prescription</button>
+          <button onclick="downloadPrescription()">📄 Download Prescription</button>
+
+          <p id="prescriptionMessage" class="message"></p>
+
+          <h2 style="margin-top:22px;">Today's Patients</h2>
+
+          <table>
+            <tr><th>Patient</th><th>Problem</th><th>Status</th></tr>
+            <tr><td>Rahul</td><td>Fever</td><td>Pending</td></tr>
+            <tr><td>Priya</td><td>Dental Checkup</td><td>Completed</td></tr>
+            <tr><td>Amit</td><td>Back Pain</td><td>Waiting</td></tr>
+          </table>
+        </div>
+      </main>
+    </div>
+  </section>
+
+  <!-- AI -->
+  <section id="aiPage" class="page">
+    <div class="dashboard-layout">
+      <aside class="sidebar">
+        <h3>📌 Portal Menu</h3>
+        <button onclick="showPage('dashboardPage')">🏠 Dashboard</button>
+        <button onclick="showPage('aiPage')">🤖 AI Assistant</button>
+        <button onclick="showPage('analyticsPage')">📊 Analytics</button>
+        <button onclick="logout()">🚪 Logout</button>
+      </aside>
+
+      <main class="main-content">
+        <div class="content-card">
+          <h2>🤖 AI Healthcare Assistant</h2>
+          <p>Describe symptoms for general project-demo guidance.</p>
+
+          <input type="text" id="question" placeholder="Describe your symptoms">
+          <button onclick="chatbot()">Ask AI</button>
+          <button onclick="quickAsk('fever')">Fever</button>
+          <button onclick="quickAsk('cold')">Cold</button>
+          <button onclick="quickAsk('headache')">Headache</button>
+
+          <div id="answer" class="chart-box">AI response will appear here...</div>
+
+          <h3 style="margin-top:18px;color:#d8b4fe;">📜 Chat History</h3>
+          <ul id="chatHistory"></ul>
+        </div>
+      </main>
+    </div>
+  </section>
+
+  <!-- OCR -->
+  <section id="ocrPage" class="page">
+    <div class="dashboard-layout">
+      <aside class="sidebar">
+        <h3>📌 Portal Menu</h3>
+        <button onclick="showPage('dashboardPage')">🏠 Dashboard</button>
+        <button onclick="showPage('ocrPage')">📄 OCR Module</button>
+        <button onclick="showPage('analyticsPage')">📊 Analytics</button>
+        <button onclick="logout()">🚪 Logout</button>
+      </aside>
+
+      <main class="main-content">
+        <div class="content-card">
+          <h2>📄 AI Prescription OCR System</h2>
+          <input type="file" id="prescriptionFile">
+          <button onclick="extractOCR()">Extract Prescription</button>
+          <textarea id="ocrResult" rows="8" placeholder="Extracted text will appear here"></textarea>
+        </div>
+      </main>
+    </div>
+  </section>
+
+  <!-- ANALYTICS -->
+  <section id="analyticsPage" class="page">
+    <div class="dashboard-layout">
+      <aside class="sidebar">
+        <h3>📌 Portal Menu</h3>
+        <button onclick="showPage('dashboardPage')">🏠 Dashboard</button>
+        <button onclick="showPage('patientPage')">👤 Patient Module</button>
+        <button onclick="showPage('doctorPage')">👨‍⚕️ Doctor Module</button>
+        <button onclick="showPage('aiPage')">🤖 AI Assistant</button>
+        <button onclick="showPage('ocrPage')">📄 OCR Module</button>
+        <button onclick="showPage('analyticsPage')">📊 Analytics</button>
+        <button onclick="showPage('reminderPage')">💊 Medicine Reminder</button>
+        <button onclick="showPage('predictionPage')">❤️ Health Prediction</button>
+        <button onclick="showPage('healthReportPage')">📈 Health Report</button>
+        <button onclick="logout()">🚪 Logout</button>
+      </aside>
+
+      <main class="main-content">
+        <div class="content-card">
+          <h2>📊 AI Healthcare Analytics</h2>
+          <p>Live visual analytics for appointments, patients and department performance.</p>
+
+          <div class="cards">
+            <div class="stat-card"><h3>Total Patients</h3><h1>245</h1></div>
+            <div class="stat-card"><h3>Total Doctors</h3><h1>38</h1></div>
+            <div class="stat-card"><h3>Appointments</h3><h1>520</h1></div>
+            <div class="stat-card"><h3>AI Queries</h3><h1>180</h1></div>
+          </div>
+
+          <div class="two-columns">
+            <div class="chart-box">
+              <h3>📈 Monthly Appointments</h3>
+              <canvas id="appointmentChart"></canvas>
+            </div>
+
+            <div class="chart-box">
+              <h3>🏥 Department-wise Patients</h3>
+              <canvas id="departmentChart"></canvas>
+            </div>
+          </div>
+
+          <div class="two-columns">
+            <div class="chart-box">
+              <h3>👨‍⚕️ Doctor Performance</h3>
+              <canvas id="doctorChart"></canvas>
+            </div>
+
+            <div class="chart-box">
+              <h3>📋 Appointment Status</h3>
+              <canvas id="statusChart"></canvas>
+            </div>
+          </div>
+        </div>
+      </main>
+    </div>
+  </section>
+
+  <!-- REMINDER -->
+  <section id="reminderPage" class="page">
+    <div class="dashboard-layout">
+      <aside class="sidebar">
+        <h3>📌 Portal Menu</h3>
+        <button onclick="showPage('dashboardPage')">🏠 Dashboard</button>
+        <button onclick="showPage('reminderPage')">💊 Medicine Reminder</button>
+        <button onclick="logout()">🚪 Logout</button>
+      </aside>
+
+      <main class="main-content">
+        <div class="content-card">
+          <h2>💊 Medicine Reminder</h2>
+          <input type="text" id="medicineName" placeholder="Enter medicine name">
+          <input type="time" id="medicineTime">
+          <button onclick="addReminder()">Add Reminder</button>
+          <div id="reminderList" class="chart-box"></div>
+        </div>
+      </main>
+    </div>
+  </section>
+
+  <!-- PREDICTION -->
+  <section id="predictionPage" class="page">
+    <div class="dashboard-layout">
+      <aside class="sidebar">
+        <h3>📌 Portal Menu</h3>
+        <button onclick="showPage('dashboardPage')">🏠 Dashboard</button>
+        <button onclick="showPage('predictionPage')">❤️ Health Prediction</button>
+        <button onclick="logout()">🚪 Logout</button>
+      </aside>
+
+      <main class="main-content">
+        <div class="content-card">
+          <h2>❤️ Health Risk Prediction</h2>
+          <input type="number" id="age" placeholder="Enter age">
+          <input type="number" id="weight" placeholder="Enter weight in kg">
+          <input type="number" id="bp" placeholder="Enter blood pressure">
+          <button onclick="predictHealth()">Check Health Risk</button>
+          <div id="predictionResult" class="chart-box"></div>
+        </div>
+      </main>
+    </div>
+  </section>
+
+  <!-- HEALTH REPORT -->
+  <section id="healthReportPage" class="page">
+    <div class="dashboard-layout">
+      <aside class="sidebar">
+        <h3>📌 Portal Menu</h3>
+        <button onclick="showPage('dashboardPage')">🏠 Dashboard</button>
+        <button onclick="showPage('healthReportPage')">📈 Health Report</button>
+        <button onclick="logout()">🚪 Logout</button>
+      </aside>
+
+      <main class="main-content">
+        <div class="content-card">
+          <h2>📈 Personal Health Report</h2>
+          <h3 style="color:#d8b4fe;">BMI Calculator</h3>
+          <input type="number" id="bmiWeight" placeholder="Enter weight in kg">
+          <input type="number" id="bmiHeight" placeholder="Enter height in cm">
+          <button onclick="calculateBMI()">Calculate BMI</button>
+          <div id="bmiResult" class="chart-box"></div>
+        </div>
+      </main>
+    </div>
+  </section>
+
+  <script>
+    window.addEventListener("load",function(){
+      setTimeout(function(){
+        document.getElementById("loader").style.opacity="0";
+        document.getElementById("loader").style.pointerEvents="none";
+        setTimeout(function(){
+          document.getElementById("loader").style.display="none";
+        },600);
+      },1200);
+    });
+
+    function showPage(pageId){
+      document.querySelectorAll(".page,.auth-page").forEach(function(page){
+        page.classList.remove("active");
+      });
+
+      document.getElementById(pageId).classList.add("active");
+      window.scrollTo(0,0);
+
+      if(pageId==="analyticsPage"){
+        setTimeout(loadCharts,250);
+      }
+    }
+
+    function registerUser(){
+      const name=document.getElementById("registerName").value.trim();
+      const email=document.getElementById("registerEmail").value.trim();
+      const password=document.getElementById("registerPassword").value;
+      const role=document.getElementById("registerRole").value;
+      const message=document.getElementById("registerMessage");
+
+      if(!/^[A-Za-z ]{3,}$/.test(name)){
+        message.style.color="#ff8fa3";
+        message.innerHTML="Name should contain only letters and spaces.";
+        return;
+      }
+
+      if(!email.includes("@")){
+        message.style.color="#ff8fa3";
+        message.innerHTML="Please enter a valid email address.";
+        return;
+      }
+
+      if(password.length<6){
+        message.style.color="#ff8fa3";
+        message.innerHTML="Password must contain at least 6 characters.";
+        return;
+      }
+
+      if(role===""){
+        message.style.color="#ff8fa3";
+        message.innerHTML="Please select a role.";
+        return;
+      }
+
+      message.style.color="#86efac";
+      message.innerHTML="Account created successfully! Now login.";
+    }
+
+    function login(){
+      const email=document.getElementById("loginEmail").value.trim();
+      const password=document.getElementById("loginPassword").value.trim();
+      const role=document.getElementById("loginRole").value;
+      const message=document.getElementById("loginMessage");
+
+      if(!email.includes("@") || password.length<6 || role===""){
+        message.style.color="#ff8fa3";
+        message.innerHTML="Enter valid email, password and role.";
+        return;
+      }
+
+      document.getElementById("profileName").innerHTML=email.split("@")[0];
+      document.getElementById("profileEmail").innerHTML=email;
+      document.getElementById("profileRole").innerHTML=role;
+
+      showPage("dashboardPage");
+    }
+
+    function forgotPassword(){
+      const email=document.getElementById("forgotEmail").value.trim();
+      const message=document.getElementById("forgotMessage");
+
+      if(!email.includes("@")){
+        message.style.color="#ff8fa3";
+        message.innerHTML="Please enter a valid email.";
+        return;
+      }
+
+      message.style.color="#86efac";
+      message.innerHTML="Password reset link sent to "+email+" (demo).";
+    }
+
+    function logout(){
+      if(confirm("Do you want to logout?")){
+        showPage("loginPage");
+      }
+    }
+
+    function chatbot(){
+      const question=document.getElementById("question").value.toLowerCase().trim();
+      let answer="This is a demo AI assistant. For medical concerns, consult a qualified healthcare professional.";
+
+      if(question.includes("fever")){
+        answer="For fever, rest, drink fluids, and seek medical advice if symptoms continue or worsen.";
+      }else if(question.includes("cold")){
+        answer="For cold symptoms, rest, stay hydrated, and monitor symptoms. Consult a professional if needed.";
+      }else if(question.includes("headache")){
+        answer="For headache, rest in a quiet place and stay hydrated. Seek medical advice if pain is severe or persistent.";
+      }
+
+      document.getElementById("answer").innerHTML=answer;
+
+      if(question){
+        document.getElementById("chatHistory").innerHTML+="<li><b>You:</b> "+question+"</li>";
+      }
+    }
+
+    function quickAsk(symptom){
+      document.getElementById("question").value=symptom;
+      chatbot();
+    }
+
+    function extractOCR(){
+      document.getElementById("ocrResult").value=
+        "Dr. Sharma\nPatient: Rahul Patil\nParacetamol 500mg - Twice Daily\nVitamin D - Once Daily";
+      alert("Prescription extracted successfully!");
+    }
+
+    function addReminder(){
+      const medicine=document.getElementById("medicineName").value.trim();
+      const time=document.getElementById("medicineTime").value;
+
+      if(!medicine || !time){
+        alert("Please enter medicine name and time.");
+        return;
+      }
+
+      document.getElementById("reminderList").innerHTML+=
+        "<p>💊 <b>"+medicine+"</b> — Reminder at <b>"+time+"</b></p>";
+
+      document.getElementById("medicineName").value="";
+      document.getElementById("medicineTime").value="";
+    }
+
+    function predictHealth(){
+      const age=Number(document.getElementById("age").value);
+      const weight=Number(document.getElementById("weight").value);
+      const bp=Number(document.getElementById("bp").value);
+      const result=document.getElementById("predictionResult");
+
+      if(!age || !weight || !bp){
+        result.innerHTML="Please fill all health details.";
+        return;
+      }
+
+      let risk="Low Risk";
+      let message="Your entered values look normal. Continue healthy habits.";
+
+      if(bp>140 || age>60 || weight>100){
+        risk="Moderate Risk";
+        message="Maintain healthy habits and consider discussing these values with a healthcare professional.";
+      }
+
+      if(bp>170){
+        risk="High Risk";
+        message="This reading may need prompt medical attention. Contact a healthcare professional.";
+      }
+
+      result.innerHTML="<h3>Health Prediction Result</h3><p><b>Risk Level:</b> "+risk+"</p><p>"+message+"</p><small>This is a project demo only.</small>";
+    }
+
+    function calculateBMI(){
+      const weight=Number(document.getElementById("bmiWeight").value);
+      const heightCm=Number(document.getElementById("bmiHeight").value);
+      const result=document.getElementById("bmiResult");
+
+      if(!weight || !heightCm){
+        result.innerHTML="Please enter weight and height.";
+        return;
+      }
+
+      const heightM=heightCm/100;
+      const bmi=weight/(heightM*heightM);
+
+      let category="Healthy Range";
+
+      if(bmi<18.5) category="Below healthy range";
+      else if(bmi>=25 && bmi<30) category="Above healthy range";
+      else if(bmi>=30) category="High BMI range";
+
+      result.innerHTML="<h3>Your BMI Result</h3><p><b>BMI:</b> "+bmi.toFixed(1)+"</p><p><b>Category:</b> "+category+"</p><small>This is a project demo only.</small>";
+    }
+
+    function bookAppointment(){
+      const doctor=document.getElementById("appointmentDoctor").value;
+      const date=document.getElementById("appointmentDate").value;
+      const time=document.getElementById("appointmentTime").value;
+      const reason=document.getElementById("appointmentReason").value.trim();
+      const message=document.getElementById("appointmentMessage");
+
+      if(!doctor || !date || !time || !reason){
+        message.style.color="#ff8fa3";
+        message.innerHTML="Please fill all appointment details.";
+        return;
+      }
+
+      document.getElementById("appointmentHistory").innerHTML+=
+        "<tr><td>"+date+", "+time+"</td><td>"+doctor+"</td><td>"+reason+"</td><td>Upcoming</td></tr>";
+
+      message.style.color="#86efac";
+      message.innerHTML="Appointment booked successfully!";
+    }
+
+    function savePrescription(){
+      const box=document.getElementById("prescriptionBox");
+      const message=document.getElementById("prescriptionMessage");
+
+      if(box.value.trim()===""){
+        message.style.color="#ff8fa3";
+        message.innerHTML="Please write a prescription first.";
+        return;
+      }
+
+      message.style.color="#86efac";
+      message.innerHTML="Prescription saved successfully!";
+    }
+
+    function downloadPrescription(){
+      const text=document.getElementById("prescriptionBox").value.trim();
+
+      if(!text){
+        alert("Please write a prescription first.");
+        return;
+      }
+
+      const file=new Blob([text],{type:"text/plain"});
+      const link=document.createElement("a");
+      link.href=URL.createObjectURL(file);
+      link.download="patient-prescription.txt";
+      link.click();
+    }
+
+    function searchDashboard(){
+      const text=document.getElementById("dashboardSearch").value.toLowerCase().trim();
+      const result=document.getElementById("searchResult");
+
+      if(!text){
+        result.innerHTML="";
+        return;
+      }
+
+      const data=[
+        "Rahul Patil - Patient",
+        "Priya Sharma - Patient",
+        "Dr. Sharma - Doctor",
+        "OCR Report",
+        "Health Report"
+      ];
+
+      const matches=data.filter(function(item){
+        return item.toLowerCase().includes(text);
+      });
+
+      result.innerHTML=matches.length
+        ? "<div class='chart-box'><b>Search Results:</b><br>"+matches.join("<br>")+"</div>"
+        : "<div class='chart-box'><b>No records found.</b></div>";
+    }
+
+    let appointmentChart;
+    let departmentChart;
+    let doctorChart;
+    let statusChart;
+
+    function loadCharts(){
+      if(appointmentChart){
+        appointmentChart.destroy();
+        departmentChart.destroy();
+        doctorChart.destroy();
+        statusChart.destroy();
+      }
+
+      const textColor="#eaf2ff";
+
+      appointmentChart=new Chart(document.getElementById("appointmentChart"),{
+        type:"line",
+        data:{
+          labels:["Jan","Feb","Mar","Apr","May","Jun"],
+          datasets:[{
+            label:"Appointments",
+            data:[40,55,62,70,88,105],
+            borderColor:"#22d3ee",
+            backgroundColor:"rgba(34,211,238,.15)",
+            fill:true,
+            tension:.4,
+            borderWidth:3,
+            pointBackgroundColor:"#d946ef",
+            pointRadius:5
+          }]
+        },
+        options:{
+          responsive:true,
+          plugins:{legend:{labels:{color:textColor}}},
+          scales:{
+            x:{ticks:{color:textColor},grid:{color:"rgba(255,255,255,.08)"}},
+            y:{beginAtZero:true,ticks:{color:textColor},grid:{color:"rgba(255,255,255,.08)"}}
+          }
+        }
+      });
+
+      departmentChart=new Chart(document.getElementById("departmentChart"),{
+        type:"doughnut",
+        data:{
+          labels:["General","Dental","Cardiology","Orthopedic","Eye Care"],
+          datasets:[{
+            data:[85,52,45,35,28],
+            backgroundColor:["#8b5cf6","#2563eb","#22d3ee","#d946ef","#60a5fa"],
+            borderWidth:2
+          }]
+        },
+        options:{
+          responsive:true,
+          plugins:{legend:{position:"bottom",labels:{color:textColor}}}
+        }
+      });
+
+      doctorChart=new Chart(document.getElementById("doctorChart"),{
+        type:"bar",
+        data:{
+          labels:["Dr. Sharma","Dr. Patil","Dr. Singh","Dr. Mehta","Dr. Joshi"],
+          datasets:[{
+            label:"Patients Treated",
+            data:[65,52,48,42,35],
+            backgroundColor:["#8b5cf6","#2563eb","#22d3ee","#d946ef","#60a5fa"],
+            borderRadius:8
+          }]
+        },
+        options:{
+          responsive:true,
+          plugins:{legend:{labels:{color:textColor}}},
+          scales:{
+            x:{ticks:{color:textColor},grid:{display:false}},
+            y:{beginAtZero:true,ticks:{color:textColor},grid:{color:"rgba(255,255,255,.08)"}}
+          }
+        }
+      });
+
+      statusChart=new Chart(document.getElementById("statusChart"),{
+        type:"pie",
+        data:{
+          labels:["Completed","Upcoming","Cancelled","Pending"],
+          datasets:[{
+            data:[240,150,45,85],
+            backgroundColor:["#22d3ee","#2563eb","#ef4444","#d946ef"],
+            borderWidth:2
+          }]
+        },
+        options:{
+          responsive:true,
+          plugins:{legend:{position:"bottom",labels:{color:textColor}}}
+        }
+      });
+    }
+
+    document.addEventListener("mousemove",function(e){
+      document.querySelectorAll(".stat-card").forEach(function(card){
+        const rect=card.getBoundingClientRect();
+        const x=e.clientX-rect.left;
+        const y=e.clientY-rect.top;
+
+        if(x>=0 && x<=rect.width && y>=0 && y<=rect.height){
+          const rotateY=((x/rect.width)-.5)*12;
+          const rotateX=((y/rect.height)-.5)*-12;
+          card.style.transform="rotateX("+rotateX+"deg) rotateY("+rotateY+"deg) translateY(-8px)";
+        }
+      });
+    });
+
+    document.querySelectorAll(".stat-card").forEach(function(card){
+      card.addEventListener("mouseleave",function(){
+        card.style.transform="rotateX(0) rotateY(0) translateY(0)";
+      });
+    });
+  </script>
+
+</body>
+</html>
